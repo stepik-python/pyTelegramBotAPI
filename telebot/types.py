@@ -103,6 +103,7 @@ class Update(JsonDeserializable):
         callback_query = None
         shipping_query = None
         pre_checkout_query = None
+        poll = None
         if 'message' in obj:
             message = Message.de_json(obj['message'])
         if 'edited_message' in obj:
@@ -121,11 +122,13 @@ class Update(JsonDeserializable):
             shipping_query = ShippingQuery.de_json(obj['shipping_query'])
         if 'pre_checkout_query' in obj:
             pre_checkout_query = PreCheckoutQuery.de_json(obj['pre_checkout_query'])
+        if 'poll' in obj:
+            poll = Poll.de_json(obj['poll'])
         return cls(update_id, message, edited_message, channel_post, edited_channel_post, inline_query,
-                   chosen_inline_result, callback_query, shipping_query, pre_checkout_query)
+                   chosen_inline_result, callback_query, shipping_query, pre_checkout_query, poll)
 
     def __init__(self, update_id, message, edited_message, channel_post, edited_channel_post, inline_query,
-                 chosen_inline_result, callback_query, shipping_query, pre_checkout_query):
+                 chosen_inline_result, callback_query, shipping_query, pre_checkout_query, poll):
         self.update_id = update_id
         self.message = message
         self.edited_message = edited_message
@@ -136,6 +139,7 @@ class Update(JsonDeserializable):
         self.callback_query = callback_query
         self.shipping_query = shipping_query
         self.pre_checkout_query = pre_checkout_query
+        self.poll = poll
 
 
 class WebhookInfo(JsonDeserializable):
@@ -287,6 +291,9 @@ class Message(JsonDeserializable):
         if 'audio' in obj:
             opts['audio'] = Audio.de_json(obj['audio'])
             content_type = 'audio'
+        if 'animation' in obj:
+            opts['animation'] = Animation.de_json(obj['animation'])
+            content_type = 'animation'
         if 'document' in obj:
             opts['document'] = Document.de_json(obj['document'])
             content_type = 'document'
@@ -404,6 +411,7 @@ class Message(JsonDeserializable):
         self.date = date
         self.chat = chat
         self.forward_from_chat = None
+        self.forward_from_message_id = None
         self.forward_from = None
         self.forward_date = None
         self.reply_to_message = None
@@ -424,6 +432,7 @@ class Message(JsonDeserializable):
         self.contact = None
         self.location = None
         self.venue = None
+        self.animation = None
         self.new_chat_member = None
         self.new_chat_members = None
         self.left_chat_member = None
@@ -483,10 +492,10 @@ class Message(JsonDeserializable):
                 url = "tg://user?id={0}".format(user.id)
             elif type == "mention":
                 url = "https://t.me/{0}".format(text[1:])
+            text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             if not type or not _subs.get(type):
                 return text
             subs = _subs.get(type)
-            text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             return subs.format(text=text, url=url)
 
         offset = 0
@@ -1932,6 +1941,7 @@ class ShippingOption(JsonSerializable):
         """
         for price in args:
             self.prices.append(price)
+        return self
 
     def to_json(self):
         price_list = []
@@ -2038,6 +2048,7 @@ class Sticker(JsonDeserializable):
         file_id = obj['file_id']
         width = obj['width']
         height = obj['height']
+        is_animated = obj['is_animated']
         thumb = None
         if 'thumb' in obj:
             thumb = PhotoSize.de_json(obj['thumb'])
@@ -2047,9 +2058,9 @@ class Sticker(JsonDeserializable):
         if 'mask_position' in obj:
             mask_position = MaskPosition.de_json(obj['mask_position'])
         file_size = obj.get('file_size')
-        return cls(file_id, width, height, thumb, emoji, set_name, mask_position, file_size)
+        return cls(file_id, width, height, thumb, emoji, set_name, mask_position, file_size, is_animated)
 
-    def __init__(self, file_id, width, height, thumb, emoji, set_name, mask_position, file_size):
+    def __init__(self, file_id, width, height, thumb, emoji, set_name, mask_position, file_size, is_animated):
         self.file_id = file_id
         self.width = width
         self.height = height
@@ -2058,7 +2069,7 @@ class Sticker(JsonDeserializable):
         self.set_name = set_name
         self.mask_position = mask_position
         self.file_size = file_size
-
+        self.is_animated = is_animated
 
 class MaskPosition(JsonDeserializable, JsonSerializable):
     @classmethod
@@ -2233,10 +2244,22 @@ class Poll(JsonDeserializable):
         options = []
         for opt in obj['options']:
             options.append(PollOption.de_json(opt))
-        poll.options = options
+        total_voter_count = obj['total_voter_count']
         is_closed = obj['is_closed']
+        is_anonymous = obj['is_anonymous']
+        poll_type = obj['type']
+        allows_multiple_answers = obj['allows_multiple_answers']
+        correct_option_id = None
+        if 'correct_option_id' in obj:
+            correct_option_id = obj['correct_option_id']
         poll.id = poll_id
+        poll.options = options
+        poll.total_voter_count = total_voter_count
         poll.is_closed = is_closed
+        poll.is_anonymous = is_anonymous
+        poll.type = poll_type
+        poll.allows_multiple_answers = allows_multiple_answers
+        poll.correct_option_id = correct_option_id
         return poll
 
     def __init__(self, question):

@@ -7,7 +7,7 @@ def read(filename):
         return file.read()
 
 setup(name='pyTelegramBotAPI',
-      version='3.6.6',
+      version='3.6.7',
       description='Python Telegram bot api. ',
       long_description=read('README.md'),
       long_description_content_type="text/markdown",
@@ -24,7 +24,6 @@ setup(name='pyTelegramBotAPI',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
           'Environment :: Console',
